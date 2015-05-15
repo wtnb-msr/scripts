@@ -1,0 +1,36 @@
+#!/bin/sh
+
+APP=`basename $0`
+usage() {
+  echo "Usage: ${APP} [options]"
+  echo "    -t : Specify step host"
+  echo "    -p : Specify port number"
+  echo "    -b : Run in backgraound"
+  echo "    -h : Print this message"
+}
+
+while getopts t:p:bh OPT
+do
+  case $OPT in
+    "t" ) STEP_HOSTS="${STEP_HOSTS} ${OPTARG}" ;;
+    "p" ) PORT=${OPTARG} ;;
+    "b" ) IN_BACKGROUND="-f" ;;
+    "h" ) usage; exit ;;
+  esac
+done
+
+shift `expr $OPTIND - 1`
+
+TARGET_HOST=$1
+
+if [ "${PORT}" = "" ] || [ "${TARGET_HOST}" = "" ]; then
+  usage; exit 1
+fi
+
+for STEP in ${STEP_HOSTS}; do
+  SSH_STEPS="${SSH_STEPS} ssh -t -L ${PORT}:localhost:${PORT} ${STEP}"
+done
+
+COMMAND="${SSH_STEPS} ssh -t -N -L ${PORT}:localhost:${PORT} ${TARGET_HOST}"
+echo ${COMMAND}
+eval ${COMMAND}

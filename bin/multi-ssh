@@ -1,0 +1,55 @@
+#!/bin/bash
+
+APP=`basename $0`
+usage() {
+  echo "Usage: ${APP} [options]"
+  echo "    -t : Specify step server"
+  echo "    -s : Specify tmux session name"
+  echo "    -w : Specify tmux window name"
+  echo "    -h : Print this message"
+}
+
+while getopts t:s:w:h OPT
+do
+  case $OPT in
+    "t" ) STEP_SERVER=${OPTARG} ;;
+    "s" ) SESSION_NAME=${OPTARG} ;;
+    "w" ) WINDOW_NAME=${OPTARG} ;;
+    "h" ) usage; exit ;;
+  esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ -n "${STEP_SERVER}" ]; then
+  SSH_OPTS="-t ${STEP_SERVER} ssh"
+fi
+
+session=${SESSION_NAME:-"multi-ssh-`date +%s`"}
+window=${WINDOW_NAME:-"multi-ssh"}
+
+### tmuxのセッションを作成
+tmux new-session -d -n $window -s $session
+
+### 各ホストにsshログイン
+# 最初の1台はsshするだけ
+tmux send-keys "ssh ${SSH_OPTS} $1" C-m
+shift
+
+# 残りはpaneを作成してからssh
+for i in $*; do
+  tmux split-window -h
+  tmux send-keys "ssh ${SSH_OPTS} $i" C-m
+  if [ $# -gt 1 ]; then
+    tmux select-layout tiled > /dev/null
+  fi
+done
+
+### 最初のpaneを選択状態にする
+tmux select-pane -t 0
+
+### paneの同期モードを設定
+tmux set-window-option synchronize-panes on > /dev/null
+
+### セッションにアタッチ
+tmux attach-session -t $session
