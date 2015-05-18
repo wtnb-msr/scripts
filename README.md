@@ -1,2 +1,9 @@
 # scripts
 
+script
+
+## Usage
+
+```
+PATH=
+```
