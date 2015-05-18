@@ -3,8 +3,10 @@
 APP_DIR=$(cd $(dirname $0) && pwd)
 LINK_DIR=$(cd ${HOME}/Applications && pwd)
 
-ln -s ${APP_DIR}/scripts ${HOME}/Applications/scripts
+if [ -f ${HOME}/Applications/scripts ]; then
+  ln -s ${APP_DIR}/scripts ${HOME}/Applications/scripts
+fi
 
-echo "Add to .zshrc"
+echo "Please set \$PATH"
 echo "export PATH=\${HOME}/Applications/scripts:\${PATH}"
 
